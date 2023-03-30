@@ -70,7 +70,7 @@ class ValueIterationAgent(ValueEstimationAgent):
                 if self.mdp.isTerminal(state):
                     continue
                 
-                max = -9999.0
+                max = float("-inf")
                 # Calculer la plus grande valeur de l'état courant
                 for action in self.mdp.getPossibleActions(state):
                     qValue = self.computeQValueFromValues(state, action)
@@ -113,7 +113,7 @@ class ValueIterationAgent(ValueEstimationAgent):
         if self.mdp.isTerminal(state):
             return None
         bestAction = None
-        bestQValue = -9999.0
+        bestQValue = float("-inf")
         # Sinon trouver la meilleure action selon les choix de l'état courant
         for action in self.mdp.getPossibleActions(state):
             actionValue = self.computeQValueFromValues(state, action)
