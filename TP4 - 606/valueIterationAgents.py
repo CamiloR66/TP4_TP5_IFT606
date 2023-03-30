@@ -62,6 +62,23 @@ class ValueIterationAgent(ValueEstimationAgent):
     def runValueIteration(self):
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
+        for i in range(self.iterations):
+            values = util.Counter()
+            # Calculer l'utilité de chaque chaque état du mdp
+            for state in self.mdp.getStates():
+                # Si l'état est terminal, on passe au prochain état
+                if self.mdp.isTerminal(state):
+                    continue
+                
+                max = -9999.0
+                # Calculer la plus grande valeur de l'état courant
+                for action in self.mdp.getPossibleActions(state):
+                    qValue = self.computeQValueFromValues(state, action)
+                    if qValue > max:
+                        max = qValue
+                    values[state] = max
+            # Mettre à jour les valeurs de la polique
+            self.values = values
 
     def getValue(self, state):
         """
@@ -75,7 +92,12 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        sumValue = 0
+        # Calculer la somme des valeurs pour l'état courant et une action selon la probabilité de transition
+        for nextState, prob in self.mdp.getTransitionStatesAndProbs(state, action):
+            reward = self.mdp.getReward(state, action, nextState)
+            sumValue += prob * (reward + self.discount * self.values[nextState])
+        return sumValue
 
     def computeActionFromValues(self, state):
         """
@@ -87,7 +109,18 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Si l'état est terminal, on ne peut pas prendre d'action
+        if self.mdp.isTerminal(state):
+            return None
+        bestAction = None
+        bestQValue = -9999.0
+        # Sinon trouver la meilleure action selon les choix de l'état courant
+        for action in self.mdp.getPossibleActions(state):
+            actionValue = self.computeQValueFromValues(state, action)
+            if actionValue > bestQValue:
+                bestQValue = actionValue
+                bestAction = action
+        return bestAction
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
