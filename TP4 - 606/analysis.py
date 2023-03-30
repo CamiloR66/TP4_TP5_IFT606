@@ -19,35 +19,52 @@
 # Set the given parameters to obtain the specified policies through
 # value iteration.
 
+# Explication des choix de paramètres pour 2a et 2b
+# Pour que la politique préfère la case +1, le facteur d'escompte ne doit pas être élevé, sinon il va préférer la case +10.
+# Le bruit peut fausser la politique s'il est trop élevé, grand risque de tomber dans la falaise.
+# Dans les deux cas, la récompse doit être négative : 
+#  - Pour que la politique préfère la case +1, la récompense est plus petite pour passer par le chemin le plus court.
+#  - Pour que la politique préfère la case +10, la récompense est plus grande afin que le chemin long soit moins pénalisant.
+
 def question2a():
-    answerDiscount = 0.99
+    answerDiscount = 0.5
     answerNoise = 0.2
-    answerLivingReward = -5
+    answerLivingReward = -4
     return answerDiscount, answerNoise, answerLivingReward
-    # If not possible, return 'NOT POSSIBLE'
 
 def question2b():
-    answerDiscount = 0.3
+    answerDiscount = 0.5
     answerNoise = 0.2
-    answerLivingReward = 1
+    answerLivingReward = -1
     return answerDiscount, answerNoise, answerLivingReward
-    # If not possible, return 'NOT POSSIBLE'
+
+# Explication des choix de paramètres pour 2c et 2d
+# Afin que la politique préfère la plus grande récompense (+10), il faut un facteur d'escompte plus grand.
+# Dans quel cas la récompense future a plus d'importance.
+# Le bruit ne doit pas être trop élevé pour ne pas fausser la politque.
+# Récompense :
+#  - Pour risquer la falaise, la récompense doit être négative, sinon il l'évitera.
+#  - Pour éviter la falaise, la récompense doit être neutre.
 
 def question2c():
     answerDiscount = 0.99
-    answerNoise = 0.01
-    answerLivingReward = -2
+    answerNoise = 0.1
+    answerLivingReward = -1
     return answerDiscount, answerNoise, answerLivingReward
-    # If not possible, return 'NOT POSSIBLE'
 
 def question2d():
-    answerDiscount = 0.9
-    answerNoise = 0.05
-    answerLivingReward = 0.5
+    answerDiscount = 0.99
+    answerNoise = 0.1
+    answerLivingReward = 0
     return answerDiscount, answerNoise, answerLivingReward
 
+# Explication des choix de paramètres pour 2e
+# Le facteur d'escompte doit être faible afin que la politique préfère les récompenses immédiates.
+# Le bruit n'a pas d'importance.
+# La récompense peut être négative, neutre ou positive. Tant qu'elle n'est pas trop négative, sinon la politique ira vers les cases récompenses.
+
 def question2e():
-    answerDiscount = 0
+    answerDiscount = 0.001
     answerNoise = 0.5
     answerLivingReward = 0
     return answerDiscount, answerNoise, answerLivingReward
