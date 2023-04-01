@@ -48,9 +48,6 @@ class QLearningAgent(ReinforcementAgent):
         "You can initialize Q-values here..."
         ReinforcementAgent.__init__(self, **args)
         "*** YOUR CODE HERE ***"
-        # self.epsilon = 0.25
-        # self.alpha = 0.1
-        # self.discount = 0.5
         self.values = util.Counter()
 
     def getQValue(self, state, action):
@@ -70,11 +67,13 @@ class QLearningAgent(ReinforcementAgent):
           terminal state, you should return a value of 0.0.
         """
         "*** YOUR CODE HERE ***"
+        # Vérifier si il y des actions à prendre
         legalActions = self.getLegalActions(state)
-        if not legalActions:    # S'il n'y a pas d'action possible
+        if not legalActions:   
             return 0.0
         qValues = []
-        for action in legalActions: # Retourner la valeur de la meilleure action
+        # Trouver la valeur de la meilleure action à prendre
+        for action in legalActions: 
             qValues.append(self.getQValue(state, action))
         return max(qValues)
 
@@ -85,26 +84,12 @@ class QLearningAgent(ReinforcementAgent):
           you should return None.
         """
         "*** YOUR CODE HERE ***"
-        
+        # Vérifier si il y des actions à prendre
         legalActions = self.getLegalActions(state)
-        if len(legalActions) == 0: # Si l'état est terminal, on ne peut pas prendre d'action
+        if len(legalActions) == 0:
             return None
-        return self.getAction(state) # Sinon, retourne la meilleure action ou une action d'exploration
 
-    def getAction(self, state):
-        """
-          Compute the action to take in the current state.  With
-          probability self.epsilon, we should take a random action and
-          take the best policy action otherwise.  Note that if there are
-          no legal actions, which is the case at the terminal state, you
-          should choose None as the action.
-          HINT: You might want to use util.flipCoin(prob)
-          HINT: To pick randomly from a list, use random.choice(list)
-        """ 
-        legalActions = self.getLegalActions(state)
-        if len(legalActions) == 0: # Vérifier si il y des actions à prendre
-            return None
-        
+        # Trouver la meilleure action et conserver les options d'exploration
         explore = util.flipCoin(self.epsilon)
         explorationOptions = []
         maxQValue = float("-inf")
@@ -117,10 +102,38 @@ class QLearningAgent(ReinforcementAgent):
             if qValue > maxQValue:  # Mettre à jour la meilleure action
                 maxQValue = qValue
                 bestAction = action
-
         if explore and explorationOptions:  # Si le flipcoin résulte en une action d'exploration
             return random.choice(explorationOptions)
         return bestAction   # Sinon, choisir la meilleure action
+
+    def getAction(self, state):
+        """
+          Compute the action to take in the current state.  With
+          probability self.epsilon, we should take a random action and
+          take the best policy action otherwise.  Note that if there are
+          no legal actions, which is the case at the terminal state, you
+          should choose None as the action.
+          HINT: You might want to use util.flipCoin(prob)
+          HINT: To pick randomly from a list, use random.choice(list)
+        """ 
+        # Vérifier si il y des actions à prendre
+        legalActions = self.getLegalActions(state)
+        if len(legalActions) == 0:
+            return None
+        
+        # Coin flip pour déterminer si l'algo explore
+        if util.flipCoin(self.epsilon): 
+            return random.choice(legalActions)
+        
+        # Trouver et retourner la meilleure action
+        maxQValue = float("-inf")
+        bestAction = None
+        for action in legalActions:
+            qValue = self.getQValue(state, action)
+            if qValue > maxQValue:
+                maxQValue = qValue
+                bestAction = action
+        return bestAction
 
     def update(self, state, action, nextState, reward):
         """
