@@ -43,7 +43,9 @@ class ReflexAgent(Agent):
 
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
+        # print("Scores = ", scores)
         bestScore = max(scores)
+        # print("Best scores = ", bestScore)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
 
@@ -78,13 +80,30 @@ class ReflexAgent(Agent):
         """
         # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePacmanSuccessor(action)
+        pos = currentGameState.getPacmanPosition()
         newPos = successorGameState.getPacmanPosition()
-        newFood = successorGameState.getFood()
-        newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-
+        newFood = successorGameState.getFood().asList()
+        # newGhostStates = successorGameState.getGhostStates()
+        # newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        score = 0
+        if successorGameState.isLose():
+            return -100
+        if pos == newPos: # Pour favoriser les déplacements
+            score -= 10
+        # Trouver le meilleur food
+        bestFood = None
+        bestFoodDist = float("inf")
+        for food in newFood:
+            foodDistance = manhattanDistance(newPos, food)
+            if foodDistance < bestFoodDist:
+                bestFood = food
+                bestFoodDist = foodDistance
+        # Réduire le score si Pacman s'éloigne du meilleur food
+        if bestFood != None:
+            if manhattanDistance(pos, bestFood) < bestFoodDist: 
+                score -= 5
+        return score
 
 def scoreEvaluationFunction(currentGameState):
     """
