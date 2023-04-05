@@ -225,7 +225,46 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def alphabeta(state, depth, agentIndex, alpha, beta):
+            # Si c'est une feuille retourner l'utilité et aucune action
+            if depth == 0 or state.isWin() or state.isLose():
+                return self.evaluationFunction(state), None
+            # Si c'est un noeud de pacman
+            if agentIndex == 0:
+                bestScore = float("-inf")
+                bestAction = None
+                # Trouver la meilleure action et le meilleur score
+                for action in state.getLegalActions(0):
+                    newGameState = state.generateSuccessor(0, action)
+                    score, _ = alphabeta(newGameState, depth, 1, alpha, beta)
+                    if score > bestScore:
+                        bestScore = score
+                        bestAction = action
+                    if bestScore > beta:
+                        return bestScore, action
+                    alpha = max(alpha, bestScore)
+                return bestScore, bestAction
+            # Sinon c'est un fantôme
+            else:
+                bestScore = float("inf")
+                bestAction = None
+                # Trouver l'action qui minimise l'utilité
+                for action in state.getLegalActions(agentIndex):
+                    newGameState = state.generateSuccessor(agentIndex, action)
+                    if agentIndex == state.getNumAgents() - 1:
+                        score, _ = alphabeta(newGameState, depth - 1, 0, alpha, beta)
+                    else:
+                        score, _ = alphabeta(newGameState, depth, agentIndex + 1, alpha, beta)
+                    if score < bestScore:
+                        bestScore = score
+                        bestAction = action
+                    if bestScore < alpha:
+                        return bestScore, bestAction
+                    beta = min(beta, bestScore)
+                return bestScore, bestAction    
+
+        _, action = alphabeta(gameState, self.depth, 0, float("-inf"), float("inf"))
+        return action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
