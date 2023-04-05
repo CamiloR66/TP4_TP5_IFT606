@@ -43,9 +43,7 @@ class ReflexAgent(Agent):
 
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
-        # print("Scores = ", scores)
         bestScore = max(scores)
-        # print("Best scores = ", bestScore)
         bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
 
@@ -174,7 +172,41 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns whether or not the game state is a losing state
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minmax(state, depth, agentIndex):
+            # Si c'est une feuille retourner l'utilité et aucune action
+            if depth == 0 or state.isWin() or state.isLose():
+                return self.evaluationFunction(state), None
+            # Si c'est un noeud de pacman
+            if agentIndex == 0:
+                bestScore = float("-inf")
+                bestAction = None
+                # Trouver la meilleure action et le meilleur score
+                for action in state.getLegalActions(0):
+                    newGameState = state.generateSuccessor(0, action)
+                    score, _ = minmax(newGameState, depth, 1)
+                    if score > bestScore:
+                        bestScore = score
+                        bestAction = action
+                return bestScore, bestAction
+            # Sinon c'est un fantôme
+            else:
+                bestScore = float("inf")
+                bestAction = None
+                # Trouver l'action qui minimise l'utilité
+                for action in state.getLegalActions(agentIndex):
+                    newGameState = state.generateSuccessor(agentIndex, action)
+                    if agentIndex == state.getNumAgents() - 1:
+                        score, _ = minmax(newGameState, depth - 1, 0)
+                    else:
+                        score, _ = minmax(newGameState, depth, agentIndex + 1)
+                    if score < bestScore:
+                        bestScore = score
+                        bestAction = action
+                return bestScore, bestAction    
+
+        _, action = minmax(gameState, self.depth, 0)
+        return action
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
