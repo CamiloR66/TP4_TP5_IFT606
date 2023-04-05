@@ -116,13 +116,13 @@ class ReflexAgent(Agent):
                 bestFood = food
                 minFoodDist = foodDistance
 
-        # Si Pacman mange une capsule ou du food avec cet action
+        # Augmenter le score si Pacman mange
         if minCapsuleDist == 0.0:
             score += 10.0
         elif minFoodDist == 0.0:
             score += 5.0
         
-        # Si Pacman s'éloigne de la capsule ou du food le plus proche
+        # Diminuer le score si Pacman s'éloigne des objectifs
         elif minCapsuleDist == minFoodDist or minCapsuleDist < minFoodDist:
             if manhattanDistance(pos, bestCapsule) < minCapsuleDist: 
                 score -= 10.0
@@ -130,12 +130,13 @@ class ReflexAgent(Agent):
             if manhattanDistance(pos, bestFood) < minFoodDist: 
                 score -= 5.0
 
+        # Ajuster le score selon l'état et la distance des fantômes
         for i in range(len(newGhostStates)):
             ghostDistance = manhattanDistance(newPos, newGhostStates[i].getPosition())
             # Si les fantômes sont effrayés, favoriser l'approche
             if newScaredTimes[i] > 0.0:
                 if ghostDistance == 0.0:
-                    score += 200.0
+                    score += 100.0
                 else:
                     score += 1.0 / ghostDistance
             # Si les fantômes ne sont pas effrayés, favoriser la distance
@@ -215,14 +216,15 @@ class MinimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         def minmax(state, depth, agentIndex):
-            # Si c'est une feuille retourner l'utilité et aucune action
+            # Si c'est un noeud terminal, retourner la valeur
             if depth == 0 or state.isWin() or state.isLose():
                 return self.evaluationFunction(state), None
-            # Si c'est un noeud de pacman
+            
+            # Si c'est un noeud Pacman
             if agentIndex == 0:
                 bestScore = float("-inf")
                 bestAction = None
-                # Trouver la meilleure action et le meilleur score
+                # Trouver l'action qui maximise l'utilité
                 for action in state.getLegalActions(0):
                     newGameState = state.generateSuccessor(0, action)
                     score, _ = minmax(newGameState, depth, 1)
@@ -230,6 +232,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
                         bestScore = score
                         bestAction = action
                 return bestScore, bestAction
+            
             # Sinon c'est un fantôme
             else:
                 bestScore = float("inf")
@@ -268,14 +271,15 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         def alphabeta(state, depth, agentIndex, alpha, beta):
-            # Si c'est une feuille retourner l'utilité et aucune action
+            # Si c'est un noeud terminal, retourner la valeur
             if depth == 0 or state.isWin() or state.isLose():
                 return self.evaluationFunction(state), None
-            # Si c'est pacman
+            
+            # Si c'est un noeud Pacman
             if agentIndex == 0:
+                # Trouver l'action qui maximise l'utilité
                 bestScore = float("-inf")
                 bestAction = None
-                # Trouver la meilleure action et le meilleur score
                 for action in state.getLegalActions(0):
                     newGameState = state.generateSuccessor(0, action)
                     score, _ = alphabeta(newGameState, depth, 1, alpha, beta)
@@ -284,9 +288,11 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                         bestAction = action
                     if bestScore > beta:
                         return bestScore, action
+
                     alpha = max(alpha, bestScore)
                 return bestScore, bestAction
-            # Sinon c'est un fantôme
+            
+            # Sinon, c'est un noeud fantôme
             else:
                 bestScore = float("inf")
                 bestAction = None
@@ -302,6 +308,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                         bestAction = action
                     if bestScore < alpha:
                         return bestScore, bestAction
+
                     beta = min(beta, bestScore)
                 return bestScore, bestAction    
 
@@ -329,38 +336,40 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         """
         "*** YOUR CODE HERE ***"
         def expectiminmax(state, depth, agentIndex):
-            # Si c'est une feuille retourner l'utilité et aucune action
+            # Si c'est un état terminal, retourner la valeur
             if depth == 0 or state.isWin() or state.isLose():
                 return self.evaluationFunction(state), None
-            # Si c'est un noeud chance
+            
+            # Si c'est un noeud chance, calculer la somme des utilités selon une probabilité uniforme
             if agentIndex != 0:
                 totalScore = 0
                 actions = state.getLegalActions(agentIndex)
                 # Calculer la moyenne des scores pour chaque action
                 for action in actions:
                     newGameState = state.generateSuccessor(agentIndex, action)
-                    # Calculer la probabilité de cette action en supposant une distribution uniforme
                     prob = 1.0 / len(actions)
-                    # Ajouter le score de l'état résultant pondéré par la probabilité à la somme totale
+                    # Si c'est le dernier noeud fantôme, le prochain noeud est Pacman
                     if agentIndex == state.getNumAgents() - 1:
                         score, _ = expectiminmax(newGameState, depth - 1, 0)
+                    # Sinon, c'est un autre noeud fantôme
                     else:
                         score, _ = expectiminmax(newGameState, depth, agentIndex + 1)
+                    # Ajouter le score en fonction de la probabilit,
                     totalScore += prob * score
                 return totalScore, None
+            
+            # Sinon, c'est un noeud Pacman
             else:
-                # Si c'est un noeud de Pac-Man
-                if agentIndex == 0:
-                    bestScore = float("-inf")
-                    bestAction = None
-                    # Trouver la meilleure action et le meilleur score
-                    for action in state.getLegalActions(0):
-                        newGameState = state.generateSuccessor(0, action)
-                        score, _ = expectiminmax(newGameState, depth, 1)
-                        if score > bestScore:
-                            bestScore = score
-                            bestAction = action
-                    return bestScore, bestAction
+                # Trouver l'action qui maximise l'utilité
+                bestScore = float("-inf")
+                bestAction = None
+                for action in state.getLegalActions(0):
+                    newGameState = state.generateSuccessor(0, action)
+                    score, _ = expectiminmax(newGameState, depth, 1)
+                    if score > bestScore:
+                        bestScore = score
+                        bestAction = action
+                return bestScore, bestAction
 
         _, action = expectiminmax(gameState, self.depth, 0)
         return action
@@ -379,9 +388,77 @@ def betterEvaluationFunction(currentGameState):
     """
 
     "*** VOTRE EXPLICATION ICI ***"
+    """
+    La fonction d'évalutation calcul la valeur de l'état en fonction de trois critères :
+     - Les fantômes
+     - La capsule la plus proche
+     - La nourriture la plus proche
+    Pacman suit les priorités suivantes : 
+     - Manger un fantôme effrayé s'il est plus près que la nourriture
+     - S'éloigner des fantômes plus ils sont près
+     - Manger une capsule si elle est plus près que la nourriture
+     - Manger de la nourriture si elle est plus proche qu'une capsule
 
+    La fonction ne fait qu'un seul niveau de l'arbre, l'état courant, autrement l'algorithme finissait toujours en timeout.
+
+    Pour simplifier l'algorithme on ne tient pas compte des murs ou de la quantité de nourriture, seulement la plus proche.
+    """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Variables de l'état du jeu
+    pos = currentGameState.getPacmanPosition()
+    newFood = currentGameState.getFood().asList()
+    newCapsules = currentGameState.getCapsules()
+    newGhostStates = currentGameState.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+
+    # Score initial
+    score = 0.0
+
+    # Regarder les conditions de fin de la partie
+    if currentGameState.isLose():
+        return -1000.0
+    if currentGameState.isWin():
+        return 1000.0
+
+    # Trouver la capsule la plus proche
+    minCapsuleDist = float("inf")
+    for capsule in newCapsules:
+        capsuleDistance = manhattanDistance(pos, capsule)
+        if capsuleDistance < minCapsuleDist:
+            minCapsuleDist = capsuleDistance
+
+    # Trouver la nourriture la plus proche
+    minFoodDist = float("inf")
+    for food in newFood:
+        foodDistance = manhattanDistance(pos, food)
+        if foodDistance < minFoodDist:
+            minFoodDist = foodDistance
+
+    # Augmenter le score si Pacman mange
+    if minCapsuleDist == 0.0:
+        score += 20.0
+    elif minFoodDist == 0.0:
+        score += 5.0
+    
+    # Ajuster le score selon l'état et la distance des fantômes
+    for i in range(len(newGhostStates)):
+        ghostDistance = manhattanDistance(pos, newGhostStates[i].getPosition())
+        # Si les fantômes sont effrayés, favoriser l'approche
+        if newScaredTimes[i] > 0.0:
+            if ghostDistance == 0.0:
+                score += 100.0
+            else:
+                if minFoodDist + 2.0 < ghostDistance:
+                    score -= 1.0 / ghostDistance
+                elif minFoodDist + 4.0 < ghostDistance:
+                    score -= 10.0 / ghostDistance
+                else:
+                    score += 1.0 / ghostDistance
+        # Si les fantômes ne sont pas effrayés, favoriser la distance
+        else:
+            score -= 10.0 / ghostDistance
+
+    return score
 
 # Abbreviation
 better = betterEvaluationFunction
