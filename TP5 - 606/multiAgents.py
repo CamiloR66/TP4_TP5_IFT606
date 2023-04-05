@@ -81,27 +81,69 @@ class ReflexAgent(Agent):
         pos = currentGameState.getPacmanPosition()
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood().asList()
-        # newGhostStates = successorGameState.getGhostStates()
-        # newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        newCapsules = successorGameState.getCapsules()
+        newGhostStates = successorGameState.getGhostStates()
+        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
         "*** YOUR CODE HERE ***"
-        score = 0
+        # Score initial
+        score = 0.0
+
+        # Regarder les conditions de fin de la partie
         if successorGameState.isLose():
-            return -100
-        if pos == newPos: # Pour favoriser les déplacements
-            score -= 10
-        # Trouver le meilleur food
+            return -1000.0
+        if successorGameState.isWin():
+            return 1000.0
+        
+        # Pour favoriser les déplacements
+        if pos == newPos:
+            score -= 10.0
+
+        # Trouver la capsule la plus proche
+        bestCapsule = None
+        minCapsuleDist = float("inf")
+        for capsule in newCapsules:
+            capsuleDistance = manhattanDistance(newPos, capsule)
+            if capsuleDistance < minCapsuleDist:
+                bestCapsule = capsule
+                minCapsuleDist = capsuleDistance
+
+        # Trouver la food la plus proche
         bestFood = None
-        bestFoodDist = float("inf")
+        minFoodDist = float("inf")
         for food in newFood:
             foodDistance = manhattanDistance(newPos, food)
-            if foodDistance < bestFoodDist:
+            if foodDistance < minFoodDist:
                 bestFood = food
-                bestFoodDist = foodDistance
-        # Réduire le score si Pacman s'éloigne du meilleur food
-        if bestFood != None:
-            if manhattanDistance(pos, bestFood) < bestFoodDist: 
-                score -= 5
+                minFoodDist = foodDistance
+
+        # Si Pacman mange une capsule ou du food avec cet action
+        if minCapsuleDist == 0.0:
+            score += 10.0
+        elif minFoodDist == 0.0:
+            score += 5.0
+        
+        # Si Pacman s'éloigne de la capsule ou du food le plus proche
+        elif minCapsuleDist == minFoodDist or minCapsuleDist < minFoodDist:
+            if manhattanDistance(pos, bestCapsule) < minCapsuleDist: 
+                score -= 10.0
+        else:
+            if manhattanDistance(pos, bestFood) < minFoodDist: 
+                score -= 5.0
+
+        for i in range(len(newGhostStates)):
+            ghostDistance = manhattanDistance(newPos, newGhostStates[i].getPosition())
+            # Si les fantômes sont effrayés, favoriser l'approche
+            if newScaredTimes[i] > 0.0:
+                if ghostDistance == 0.0:
+                    score += 200.0
+                else:
+                    score += 1.0 / ghostDistance
+            # Si les fantômes ne sont pas effrayés, favoriser la distance
+            else:
+                score -= 10.0 / ghostDistance
+
         return score
+
 
 def scoreEvaluationFunction(currentGameState):
     """
@@ -229,7 +271,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             # Si c'est une feuille retourner l'utilité et aucune action
             if depth == 0 or state.isWin() or state.isLose():
                 return self.evaluationFunction(state), None
-            # Si c'est un noeud de pacman
+            # Si c'est pacman
             if agentIndex == 0:
                 bestScore = float("-inf")
                 bestAction = None
@@ -286,7 +328,42 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def expectiminmax(state, depth, agentIndex):
+            # Si c'est une feuille retourner l'utilité et aucune action
+            if depth == 0 or state.isWin() or state.isLose():
+                return self.evaluationFunction(state), None
+            # Si c'est un noeud chance
+            if agentIndex != 0:
+                totalScore = 0
+                actions = state.getLegalActions(agentIndex)
+                # Calculer la moyenne des scores pour chaque action
+                for action in actions:
+                    newGameState = state.generateSuccessor(agentIndex, action)
+                    # Calculer la probabilité de cette action en supposant une distribution uniforme
+                    prob = 1.0 / len(actions)
+                    # Ajouter le score de l'état résultant pondéré par la probabilité à la somme totale
+                    if agentIndex == state.getNumAgents() - 1:
+                        score, _ = expectiminmax(newGameState, depth - 1, 0)
+                    else:
+                        score, _ = expectiminmax(newGameState, depth, agentIndex + 1)
+                    totalScore += prob * score
+                return totalScore, None
+            else:
+                # Si c'est un noeud de Pac-Man
+                if agentIndex == 0:
+                    bestScore = float("-inf")
+                    bestAction = None
+                    # Trouver la meilleure action et le meilleur score
+                    for action in state.getLegalActions(0):
+                        newGameState = state.generateSuccessor(0, action)
+                        score, _ = expectiminmax(newGameState, depth, 1)
+                        if score > bestScore:
+                            bestScore = score
+                            bestAction = action
+                    return bestScore, bestAction
+
+        _, action = expectiminmax(gameState, self.depth, 0)
+        return action
 
 def betterEvaluationFunction(currentGameState):
     """
